@@ -83,7 +83,12 @@ if (!meta || typeof meta !== 'object') warn('MAP_META 缺失——新模板依�
 else {
   const need = ['title', 'h1', 'subtitle', 'project', 'docCap', 'slug', 'welcomeSub'];
   need.forEach(k => { if (typeof meta[k] !== 'string' || !meta[k].trim()) err('MAP_META 缺少字段 ' + k); });
-  if (!Array.isArray(meta.stats) || !meta.stats.length) err('MAP_META.stats 必须是非空数组');
+  if (meta.stats !== undefined) {
+    if (!Array.isArray(meta.stats)) err('MAP_META.stats 必须是数组');
+    else meta.stats.forEach((s, i) => {
+      if (!s || typeof s.num !== 'string' || typeof s.lbl !== 'string') err(`MAP_META.stats[${i}] 需要 num/lbl 字符串字段`);
+    });
+  }
   if (!Array.isArray(meta.welcomeItems) || meta.welcomeItems.length < 2) err('MAP_META.welcomeItems 至少 2 条引导');
   if (typeof meta.slug === 'string' && !/^[a-z0-9][a-z0-9_-]*$/i.test(meta.slug)) err('MAP_META.slug 只能含字母数字、连字符、下划线');
   if (meta && typeof meta.slug === 'string' && meta.slug.trim()) ok('MAP_META：slug=' + meta.slug + '（欢迎层 key 将派生为 ' + meta.slug + '-welcomed）');

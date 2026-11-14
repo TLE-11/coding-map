@@ -1,6 +1,6 @@
 ---
-name: xfg-coding-map-skills
-description: "代码地图（Code Map）生成技能：把一次开发迭代、一个需求设计或一个教学章节，生成为一张自包含的可交互三栏 HTML 全景图（IDEA 风格工程树 ⇄ Mermaid 全景/时序/流程图 ⇄ 变更说明卡，三方点击联动 + SVG 连线 + 主线导览）。当用户要求生成代码地图、全景图、开发导览图、迭代对比图、需求蓝图、PR 讲解图、架构总览图，或想'跟着流程走实现一个需求'、'讲清楚这次改了什么'时使用。"
+name: coding-map
+description: "生成可离线浏览的交互式 HTML 代码地图，包含工程树、Mermaid 全景图/时序图/流程图、节点说明卡和主线导览。用于开发迭代对比、需求蓝图、PR 讲解、教学章节和架构导览。"
 version: 1.1.0
 author: xiaofuge
 license: MIT
@@ -53,7 +53,7 @@ triggers:
 
 ### 第 2 步：收集素材
 
-- 迭代/PR 对比：运行 `scripts/extract-diff.sh <repo> <baseline-ref> [current-ref]`，按插入行数倒序深入阅读变更文件；统计数字填 `meta.stats`。
+- 迭代/PR 对比：运行 `scripts/extract-diff.sh <repo> <baseline-ref> [current-ref]`，按插入行数倒序深入阅读变更文件；真实统计填 `meta.stats`。没有适用的统计时省略该字段。
 - 教学章节：读该章节的 commit 范围与已有教程文档。
 - 需求蓝图：读需求描述 + 现有代码结构（模块、既有可复用类），设计目标态的类清单与交互。
 - Onboarding：遍历项目顶层结构。
@@ -98,7 +98,7 @@ node <本技能目录>/scripts/render-map.mjs --html <输出的html>
 
 ### 第 5 步：交付
 
-`present_files` 打开 HTML（渲染验收产物一并交付），并附三行使用说明：顶部导航条跟流程走 / 任意一栏点击三方联动 / 左树支持搜索。若为 S3 蓝图场景，说明"按导航条 1→N 顺序即开发顺序"及"图为目标态、非已实施"。
+`present_files` 打开 HTML（渲染验收产物一并交付），说明如何用顶部导航条走主线、用工程树搜索并联动图与说明卡。窄屏可以用页头按钮打开工程树或说明卡，时序图默认原始大小，点击「适配」可看全图。若为 S3 蓝图场景，说明导览顺序即开发顺序，并标注目标态。
 
 ## 迭代维护
 

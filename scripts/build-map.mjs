@@ -50,8 +50,8 @@ function validateContract(D) {
     if (typeof M[k] !== 'string' || !M[k].trim()) fail(`meta.${k} 必须是非空字符串`);
   });
   if (!/^[a-z0-9][a-z0-9_-]*$/i.test(M.slug)) fail('meta.slug 只能含字母数字、连字符、下划线');
-  if (!Array.isArray(M.stats) || !M.stats.length) fail('meta.stats 必须是非空数组');
-  M.stats.forEach((s, i) => {
+  if (M.stats !== undefined && !Array.isArray(M.stats)) fail('meta.stats 必须是数组');
+  (M.stats ?? []).forEach((s, i) => {
     if (!s || typeof s.num !== 'string' || typeof s.lbl !== 'string') fail(`meta.stats[${i}] 需要 num/lbl 字符串字段`);
   });
   if (!Array.isArray(M.welcomeItems) || M.welcomeItems.length < 2) fail('meta.welcomeItems 至少 2 条引导');

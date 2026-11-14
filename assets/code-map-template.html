@@ -36,7 +36,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body { font-family: var(--sans); background: var(--bg); color: var(--text);
-    font-size: 13px; overflow: hidden; }
+    font-size: 13px; overflow: hidden; display: flex; flex-direction: column; }
 
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -47,7 +47,7 @@
 
   /* ══════════ 顶栏 ══════════ */
   header {
-    height: 54px; display: flex; align-items: center; gap: 13px; padding: 0 18px;
+    flex: none; min-height: 54px; display: flex; align-items: center; gap: 13px; padding: 6px 18px;
     background: var(--panel); border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm); z-index: 60; position: relative;
   }
@@ -62,6 +62,8 @@
   .title-block p b { color: var(--green-deep); font-weight: 600; }
   .title-block p i { font-style: normal; color: #c2c8d1; margin: 0 4px; }
   .stats { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .stats:empty { display: none; }
+  .stats:empty + #tourBtn { margin-left: auto; }
   .stat { display: flex; align-items: baseline; gap: 5px; padding: 4px 11px; white-space: nowrap;
     background: var(--bg); border: 1px solid var(--border); border-radius: 7px; }
   .stat .num { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--green-deep); }
@@ -77,12 +79,13 @@
     font-weight: 600; box-shadow: 0 2px 6px rgba(53,116,240,.3); }
   .hbtn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
   .hbtn .key { opacity: .55; font-size: 10px; margin-left: 3px; }
+  .panel-toggle { display: none; }
 
   /* ══════════ 三栏舞台 ══════════ */
   .stage {
     position: relative; display: grid;
     grid-template-columns: var(--tree-w) minmax(0, 1fr) var(--doc-w);
-    height: calc(100% - 54px);
+    flex: 1; min-height: 0;
   }
   #linkLayer {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -216,6 +219,7 @@
     background: var(--panel); border-bottom: 1px solid var(--border);
     font-size: 10.5px; color: var(--text-3); white-space: nowrap; overflow-x: auto; }
   .legend i { font-style: normal; display: inline-flex; align-items: center; gap: 5px; }
+  .legend-items { display: contents; }
   .legend .dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; flex: none; }
   .legend .lg-esc { margin-left: auto; color: #b6bdc7; }
 
@@ -368,6 +372,27 @@
   /* 导览模式时联动高亮更强 */
   body.touring .tnode.active { background: #c8dffa; box-shadow: inset 0 0 0 1.5px #86b0ec; }
   body.touring .rstep.cur { transform: scale(1.04); }
+
+  @media (max-width: 1050px) {
+    header { flex-wrap: wrap; gap: 6px 8px; padding: 8px 12px; }
+    .title-block { flex: 1 1 calc(100% - 40px); min-width: 0; overflow-wrap: anywhere; }
+    .stats { order: 1; margin-left: 0; flex-wrap: wrap; }
+    .stats:empty + #tourBtn { margin-left: 0; }
+    .panel-toggle { display: inline-block; }
+    .panel-toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent-deep); }
+    .stage { grid-template-columns: minmax(0, 1fr); }
+    #treePanel, #docPanel {
+      display: none; position: absolute; inset-block: 0; z-index: 10;
+      max-width: 86%; box-shadow: var(--shadow-md);
+    }
+    #treePanel { left: 0; width: var(--tree-w); }
+    #docPanel { right: 0; width: var(--doc-w); }
+    .stage[data-panel="treePanel"] #treePanel,
+    .stage[data-panel="docPanel"] #docPanel { display: flex; }
+    .tabs, .doc-chips { flex-wrap: wrap; }
+    .zctl { padding-block: 4px; }
+    .rail-hint { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -378,13 +403,11 @@
     <h1>xfg-2-1 开发串联全景图</h1>
     <p>基线 <b>xfg-1-3</b><i>→</i>本节 <b>xfg-2-1</b> · LLM 端口-适配器链路</p>
   </div>
-  <div class="stats">
-    <div class="stat"><span class="num">20</span><span class="lbl">新增文件</span></div>
-    <div class="stat"><span class="num amber">4</span><span class="lbl">调整文件</span></div>
-    <div class="stat"><span class="num">+3278</span><span class="lbl">/ -1 行</span></div>
-  </div>
+  <div class="stats"></div>
   <button class="hbtn primary" id="tourBtn">📖 跟流程走一遍</button>
   <button class="hbtn" id="clearBtn">清除联动 <span class="key">Esc</span></button>
+  <button class="hbtn panel-toggle" aria-controls="treePanel" aria-expanded="false">工程树</button>
+  <button class="hbtn panel-toggle" aria-controls="docPanel" aria-expanded="false">说明卡</button>
 </header>
 
 <div class="stage" id="stage">
@@ -426,11 +449,7 @@
       <span class="rail-hint">← → 切站 · Esc 清除</span>
     </div>
     <div class="legend">
-      <i><span class="dot" style="background:#e6f6ec;border:1.5px solid #17a45f"></span>🆕 新增</i>
-      <i><span class="dot" style="background:#f1f3f6;border:1.5px dashed #9aa3af"></span>1-3 复用</i>
-      <i><span class="dot" style="background:#eaf1fe;border:1.5px solid #3574f0"></span>外部网关</i>
-      <i><span class="dot" style="background:#fff4e0;border:1.5px solid #e6a23c"></span>异常 / 兜底</i>
-      <i><span class="dot" style="background:#fff0e6;border:1.5px solid #f0842c"></span>联动目标</i>
+      <span class="legend-items"></span>
       <span class="lg-esc">按住拖拽平移 · 滚轮缩放（Shift+滚轮 滚动） · 点击任意一处三方联动</span>
     </div>
     <div class="diagram-wrap on" id="wrap-over">
@@ -954,7 +973,11 @@ const TOUR = [
 const WELCOME_KEY = (((typeof MAP_META !== 'undefined' && MAP_META) || {}).slug || 'codemap') + '-welcomed';
 
 /* 图源回填到"查看源码"折叠块（页签被裁剪时对应元素不存在，跳过即可） */
-const SRC_MAP = { over: OVER_SRC, seq: SEQ_SRC, flow: FLOW_SRC };
+const SRC_MAP = {
+  over: typeof OVER_SRC === 'undefined' ? '' : OVER_SRC,
+  seq: typeof SEQ_SRC === 'undefined' ? '' : SEQ_SRC,
+  flow: typeof FLOW_SRC === 'undefined' ? '' : FLOW_SRC,
+};
 Object.entries(SRC_MAP).forEach(([name, src]) => {
   const el = document.getElementById('src-' + name);
   if (el && src) el.textContent = src;
@@ -1066,10 +1089,14 @@ function renderTree() {
     if (it.b) acc[it.b] = (acc[it.b] || 0) + 1;
     if (it.children) walk(it.children);
   }); })(TREE);
-  document.getElementById('treeFoot').innerHTML =
-    `<span class="fn"><span class="fdot" style="background:var(--green)"></span>新增 <b>${acc.new || 0}</b></span>` +
-    `<span class="fn"><span class="fdot" style="background:var(--amber)"></span>调整 <b>${acc.mod || 0}</b></span>` +
-    `<span class="fn"><span class="fdot" style="background:#b6bdc7"></span>复用 <b>${acc.old || 0}</b></span>` +
+  const counts = [
+    ['new', '新增', 'var(--green)'],
+    ['mod', '调整', 'var(--amber)'],
+    ['old', '复用', '#b6bdc7'],
+  ].filter(([kind]) => acc[kind]);
+  document.getElementById('treeFoot').innerHTML = counts.map(([kind, label, color]) =>
+    `<span class="fn"><span class="fdot" style="background:${color}"></span>${label} <b>${acc[kind]}</b></span>`
+  ).join('') +
     `<span style="margin-left:auto;color:var(--text-3)">IDEA 风格 · 双击折叠</span>`;
 }
 
@@ -1169,6 +1196,23 @@ document.querySelectorAll('.dchip').forEach(ch => ch.addEventListener('click', (
 /* ══════════════ 联动核心 ══════════════ */
 let activeTree = null, pinned = false;
 const linkLayer = document.getElementById('linkLayer');
+const stage = document.getElementById('stage');
+const panelToggles = [...document.querySelectorAll('.panel-toggle')];
+const diagramNodes = 'g.node, g.actor, g[data-et="participant"]';
+
+function showPanel(id) {
+  stage.dataset.panel = id;
+  panelToggles.forEach(button => {
+    button.setAttribute('aria-expanded', String(button.getAttribute('aria-controls') === id));
+  });
+  const active = document.getElementById(id)?.querySelector('.active');
+  active?.scrollIntoView({ block: 'nearest' });
+  if (activeTree) drawLinks();
+}
+panelToggles.forEach(button => button.addEventListener('click', () => {
+  const id = button.getAttribute('aria-controls');
+  showPanel(stage.dataset.panel === id ? '' : id);
+}));
 
 function findSvgMatches(keywords, includeHidden = false) {
   const out = [];
@@ -1179,7 +1223,7 @@ function findSvgMatches(keywords, includeHidden = false) {
     box.querySelectorAll('text, tspan, foreignObject span, foreignObject div').forEach(t => {
       const txt = (t.textContent || '').trim();
       if (!keywords.some(k => txt.includes(k))) return;
-      let g = t.closest('g.node, g.actor, g.rootGroup, g.edgeLabel, g.cluster');
+      const g = t.closest(diagramNodes + ', g.rootGroup, g.edgeLabel, g.cluster');
       if (g && !seen.has(g)) {
         seen.add(g); out.push({ el: g, box });
       } else if (!g && !seen.has(t)) {
@@ -1210,10 +1254,11 @@ function setActive(treeEl, pin) {
     /* 滚动主目标进入视野（第一个匹配） */
     const box = matches[0].box;
     const mRect = matches[0].el.getBoundingClientRect();
-    const bRect = box.getBoundingClientRect();
     const wrapEl = box.parentElement;
-    if (wrapEl.scrollIntoView) wrapEl.scrollIntoView({ block: 'nearest' });
-    if (wrapEl.scrollBy) wrapEl.scrollBy({ top: (mRect.top - bRect.top) - 100, behavior: 'smooth' });
+    const viewport = wrapEl.getBoundingClientRect();
+    const left = mRect.left < viewport.left || mRect.right > viewport.right
+      ? mRect.left - viewport.left - 24 : 0;
+    wrapEl.scrollBy({ left, top: mRect.top - viewport.top - 100, behavior: 'smooth' });
   } else if (info.kw && info.kw.length) {
     /* 当前标签页没有匹配节点 → 自动切到有关键词的标签页 */
     const tabOrder = TABS;
@@ -1221,7 +1266,11 @@ function setActive(treeEl, pin) {
     for (const name of tabOrder) {
       if (name === cur) continue;
       const found = findSvgMatches(info.kw, true).some(m => m.box.id === 'box-' + name);
-      if (found) { selectTab(name); break; }
+      if (found) {
+        selectTab(name);
+        requestAnimationFrame(() => { if (activeTree === treeEl) setActive(treeEl, pin); });
+        break;
+      }
     }
   }
   /* 树折叠/展开有 0.2s 高度过渡动画，rAF 时行可能仍是 0 尺寸；
@@ -1236,7 +1285,7 @@ function drawLinks() {
   linkLayer.querySelectorAll('path.lk, circle.src-dot').forEach(n => n.remove());
   if (!activeTree) return;
   const tR = activeTree.getBoundingClientRect();
-  if (!tR.width && !tR.height) return;
+  const treeVisible = tR.width > 0 && tR.height > 0;
 
   const info = JSON.parse(activeTree.dataset.item || '{}');
   const matches = findSvgMatches(info.kw || []).filter(m => {
@@ -1245,7 +1294,6 @@ function drawLinks() {
   });
   if (!matches.length) return;
 
-  const stage = document.getElementById('stage');
   const sR = stage.getBoundingClientRect();
   const rel = r => ({ x1: r.left - sR.left, y1: r.top - sR.top,
     x2: r.right - sR.left, y2: r.bottom - sR.top,
@@ -1253,7 +1301,7 @@ function drawLinks() {
 
   const tRel = rel(tR);
   let main = matches[0], mainRel = rel(main.el.getBoundingClientRect()), bestD = Infinity;
-  matches.forEach(m => {
+  if (treeVisible) matches.forEach(m => {
     const mr = rel(m.el.getBoundingClientRect());
     const d = Math.abs(mr.cy - tRel.cy);
     if (d < bestD) { bestD = d; main = m; mainRel = mr; }
@@ -1280,8 +1328,10 @@ function drawLinks() {
 
   const s1x = tRel.x2, s1y = tRel.cy;
   const e1x = mainRel.x1 - 6, e1y = mainRel.cy;
-  mkPath(curve(s1x + 4, s1y, e1x, e1y), true);
-  mkDot(s1x, s1y);
+  if (treeVisible) {
+    mkPath(curve(s1x + 4, s1y, e1x, e1y), true);
+    mkDot(s1x, s1y);
+  }
 
   const docEl = document.getElementById('doc-' + info.doc);
   if (docEl && docEl.offsetParent !== null) {
@@ -1293,7 +1343,7 @@ function drawLinks() {
 
 /* 反向联动：点击图节点 → 激活对应树节点（自动展开其祖先链） */
 function bindReverse() {
-  document.querySelectorAll('.mermaid-box g.node, .mermaid-box g.actor').forEach(g => {
+  document.querySelectorAll('.mermaid-box').forEach(box => box.querySelectorAll(diagramNodes).forEach(g => {
     g.style.cursor = 'pointer';
     g.addEventListener('click', () => {
       const txt = (g.textContent || '').trim();
@@ -1305,7 +1355,7 @@ function bindReverse() {
         if (el) { expandAncestors(el); setActive(el, true); }
       }
     });
-  });
+  }));
 }
 let TREE_SEARCH = [];
 function indexRows() {
@@ -1318,7 +1368,7 @@ function indexRows() {
 
 /* ══════════════ 图缩放 / 平移：自然尺寸渲染 + 适配 + 拖拽 + 滚轮 ══════════════ */
 const ZOOM_MIN = 0.35, ZOOM_MAX = 2.5;
-const zoom = Object.fromEntries(TABS.map(t => [t, { fit: true, scale: 1 }]));
+const zoom = Object.fromEntries(TABS.map(t => [t, { fit: t !== 'seq', scale: 1 }]));
 function naturalSize(tab) {
   const svg = document.getElementById('box-' + tab).querySelector('svg');
   if (!svg) return null;
@@ -1338,8 +1388,8 @@ function naturalSize(tab) {
 }
 function fitScale(tab, ns) {
   const wrap = document.getElementById('wrap-' + tab);
-  /* 用 border-box 宽度而非 clientWidth：滚动条出现/消失时适配比例不抖动 */
-  const avail = Math.max(240, wrap.getBoundingClientRect().width - 74);
+  /* 保留图容器的 48px、图卡的 52px 内边距及 2px 边框。 */
+  const avail = Math.max(1, wrap.getBoundingClientRect().width - 102);
   return Math.min(1, avail / ns.w);
 }
 function currentScale(tab) {
@@ -1456,6 +1506,7 @@ function selectTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
   document.querySelectorAll('.diagram-wrap').forEach(w => w.classList.remove('on'));
   document.getElementById('wrap-' + name).classList.add('on');
+  renderLegend(name);
   requestAnimationFrame(() => { applyZoom(name); if (activeTree) drawLinks(); });
 }
 document.querySelectorAll('.tab').forEach(tab => {
@@ -1463,7 +1514,12 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 document.getElementById('clearBtn').addEventListener('click', () => setActive(null, false));
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { setActive(null, false); searchInput.blur(); }
+  if (e.key === 'Escape') {
+    const opened = panelToggles.find(button => button.getAttribute('aria-expanded') === 'true' && button.offsetWidth);
+    if (opened) { showPanel(''); opened.focus(); }
+    setActive(null, false);
+    searchInput.blur();
+  }
   if (tourStep >= 0) {
     if (e.key === 'ArrowRight') goStep(tourStep + 1);
     if (e.key === 'ArrowLeft') goStep(tourStep - 1);
@@ -1562,13 +1618,15 @@ document.getElementById('wFree').addEventListener('click', dismissWelcome);
    mermaid 时序图不支持按参与者上色，渲染后按 🆕 标记补色：
    含 🆕 的 actor → 绿色（新增）；否则 → 灰色（复用/外部） */
 function styleSequence(box) {
-  box.querySelectorAll('g.actor').forEach(g => {
+  box.querySelectorAll('g.actor, g[data-et="participant"]').forEach(g => {
     const t = g.textContent || '';
     const rect = g.querySelector('rect');
     if (!rect) return;
     if (t.includes('🆕')) {
+      g.classList.add('newc');
       rect.style.fill = '#e6f6ec'; rect.style.stroke = '#17a45f'; rect.style.strokeWidth = '2px';
     } else {
+      g.classList.add('oldc');
       rect.style.fill = '#f1f3f6'; rect.style.stroke = '#9aa3af'; rect.style.strokeWidth = '1.2px';
       rect.style.strokeDasharray = '5 3';
     }
@@ -1579,6 +1637,24 @@ function styleSequence(box) {
   });
 }
 
+/* 以当前 SVG 实际使用的节点样式为准，不统计只声明、未使用的 classDef。 */
+const legendStyles = [
+  ['newc', '新增', '#e6f6ec', '#17a45f'],
+  ['oldc', '复用', '#f1f3f6', '#9aa3af', 'dashed'],
+  ['modc', '调整', '#f4f8ff', '#8fb0e8'],
+  ['extc', '外部依赖', '#eaf1fe', '#3574f0'],
+  ['warnc', '分支 / 兜底', '#fff4e0', '#e6a23c'],
+  ['errc', '错误', '#fdecec', '#e5484d'],
+];
+function renderLegend(tab) {
+  const box = document.getElementById('box-' + tab);
+  const nodes = [...box.querySelectorAll(diagramNodes)];
+  const items = legendStyles.filter(([kind]) => nodes.some(node => node.classList.contains(kind)));
+  document.querySelector('.legend-items').innerHTML = items.map(([, label, bg, border, line = 'solid']) =>
+    `<i><span class="dot" style="background:${bg};border:1.5px ${line} ${border}"></span>${label}</i>`
+  ).join('');
+}
+
 /* ══════════════ 启动 ══════════════ */
 renderTree();
 renderDocs();
@@ -1586,14 +1662,14 @@ indexRows();
 buildRail();
 try {
   for (const name of TABS) {
-    const src = { over: OVER_SRC, seq: SEQ_SRC, flow: FLOW_SRC }[name];
+    const src = SRC_MAP[name];
     if (!src) continue;
     const rendered = await mermaid.render('svg-' + name, src);
     document.getElementById('box-' + name).innerHTML = rendered.svg;
-    styleSequence(document.getElementById('box-' + name));
+    if (name === 'seq') styleSequence(document.getElementById('box-' + name));
   }
   bindReverse();
-  TABS.forEach(applyZoom);
+  selectTab(document.querySelector('.tab.on')?.dataset.tab || TABS[0]);
 } catch (err) {
   const firstBox = document.getElementById('box-' + TABS[0]);
   if (firstBox) firstBox.innerHTML =

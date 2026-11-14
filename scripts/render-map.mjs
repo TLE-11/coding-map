@@ -62,7 +62,7 @@ async function main() {
   const out = path.resolve(o.out || path.dirname(html));
   const slug = path.basename(html).replace(/\.html?$/, '');
   const width = Number(o.width || 1920), height = Number(o.height || 1200);
-  assert(Number.isFinite(width) && width >= 900 && width <= 6000, 'width 须在 900-6000');
+  assert(Number.isFinite(width) && width >= 320 && width <= 6000, 'width 须在 320-6000');
   assert(Number.isFinite(height) && height >= 600 && height <= 6000, 'height 须在 600-6000');
 
   const names = [
@@ -165,6 +165,14 @@ async function main() {
     assert(maskHidden, '欢迎浮层未能关闭');
     report.checks.push('welcome-dismissed');
 
+    async function openPanel(id) {
+      const button = `.panel-toggle[aria-controls="${id}"]`;
+      if (await evaluate(`(() => {
+        const b = document.querySelector(${JSON.stringify(button)});
+        return b?.offsetWidth && b.getAttribute('aria-expanded') === 'false';
+      })()`)) await click(button);
+    }
+
     /* 3. 树 / 说明卡 / 导航条已填充 */
     const counts = await evaluate(`({tree:document.querySelectorAll('.tnode').length,docs:document.querySelectorAll('.doc').length,rail:document.querySelectorAll('.rstep').length})`);
     assert(counts.tree > 0 && counts.docs > 0 && counts.rail > 0, '树/说明卡/导航条未填充: ' + JSON.stringify(counts));
@@ -184,6 +192,7 @@ async function main() {
     const firstDocSel = `(function(){const d=document.querySelector('.doc');return d?d.id:null;})()`;
     const docId = await evaluate(firstDocSel);
     assert(docId, '没有说明卡可点击');
+    await openPanel('docPanel');
     await click('#' + docId);
     await wait(400);
     const linked = await evaluate(`({node:!!document.querySelector('.tnode.active'),wires:document.querySelectorAll('#linkLayer path.lk').length,doc:!!document.querySelector('.doc.active')})`);
@@ -197,27 +206,23 @@ async function main() {
 
     /* 5b. 滚动跟随：滚动真实滚动容器必须触发连线重绘（issue #3 回归检查）。
        drawLinks 会删除并重建 path.lk，打标后滚动，标记消失即重绘。 */
-    const scrollFollow = await evaluate(`(async()=>{
-      const mark = () => { const p = document.querySelector('#linkLayer path.lk'); if (!p) return false; p.setAttribute('data-probe','1'); return true; };
-      const marked = () => !!document.querySelector('#linkLayer path.lk[data-probe="1"]');
-      const out = {};
-      for (const [name, delta] of [['docs', 220], ['tree', 160]]) {
-        const el = document.getElementById(name);
-        if (!el) { out[name] = 'skipped'; continue; }
-        mark();
+    const scrollFollow = {};
+    for (const [name, delta, panel] of [['docs', 220, 'docPanel'], ['tree', 160, 'treePanel']]) {
+      await openPanel(panel);
+      scrollFollow[name] = await evaluate(`(async()=>{
+        const line = document.querySelector('#linkLayer path.lk');
+        const el = document.getElementById('${name}');
+        if (!el || !line) return 'skipped';
         if (el.scrollHeight > el.clientHeight) {
-          el.scrollTop += delta;
+          el.scrollTop += ${delta};
           await new Promise(r => setTimeout(r, 350));
-          out[name] = !marked();
-        } else {
-          /* 内容不溢出无法原生滚动：向真实容器派发事件，验证监听挂载位置正确 */
-          el.dispatchEvent(new Event('scroll'));
-          await new Promise(r => setTimeout(r, 300));
-          out[name] = !marked() ? 'dispatch-ok' : 'skipped';
+          return !line.isConnected;
         }
-      }
-      return out;
-    })()`);
+        /* 内容不溢出时向真实容器派发事件，验证监听挂载位置。 */
+        el.dispatchEvent(new Event('scroll'));
+        return !line.isConnected ? 'dispatch-ok' : false;
+      })()`);
+    }
     assert(scrollFollow.docs === true || scrollFollow.docs === 'dispatch-ok' || scrollFollow.docs === 'skipped',
       '滚动右栏后连线未重绘（scroll 监听可能挂错容器，见 issue #3）: ' + JSON.stringify(scrollFollow));
     assert(scrollFollow.tree === true || scrollFollow.tree === 'dispatch-ok' || scrollFollow.tree === 'skipped',
@@ -226,6 +231,7 @@ async function main() {
     report.checks.push('scroll-follow-redraw');
 
     /* 6. 说明卡筛选 */
+    await openPanel('docPanel');
     const chipOk = await evaluate(`(function(){
       const chip=document.querySelector('.dchip[data-f]:not([data-f="all"])');
       if(!chip)return {ok:true,skipped:true};
@@ -239,6 +245,7 @@ async function main() {
     report.checks.push('doc-filter');
 
     /* 7. 树搜索（用第一个树行名称的片段做真实检索） */
+    await openPanel('treePanel');
     const searchOk = await evaluate(`(function(){
       const row=document.querySelector('.tnode');const info=JSON.parse(row.dataset.item||'{}');
       const q=(info.n||'').slice(0,4);if(!q)return {ok:true,skipped:true};
@@ -286,6 +293,7 @@ async function main() {
     report.checks.push('svg-export');
 
     /* 11. 全景 PNG（回到第一个页签的默认全览状态） */
+    await evaluate(`document.querySelector('.panel-toggle[aria-expanded="true"]')?.click()`);
     await click(`.tab[data-tab="${tabs[0]}"]`);
     await wait(300);
     const shot = await call('Page.captureScreenshot', {format: 'png', captureBeyondViewport: false, fromSurface: true});

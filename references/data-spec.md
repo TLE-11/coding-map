@@ -41,7 +41,7 @@ JSON 顶层字段：
 }
 ```
 
-**slug 红线**：每张新图必须换唯一 slug，否则老访客因 localStorage 命中而看不到新图欢迎层。stats 数字来自 git diff 或需求估算，写真数。
+**slug 红线**：每张新图必须换唯一 slug，否则老访客因 localStorage 命中而看不到新图欢迎层。统计数字可来自 git diff 或明确标注的需求估算。`stats` 可省略或传空数组，页头会隐藏统计。适用且实际为零的数字可照常展示。
 
 ### OVER_SRC / SEQ_SRC / FLOW_SRC（mermaid 图源码，模板字符串）
 
@@ -60,11 +60,14 @@ JSON 顶层字段：
 
 ```
 newc  绿色实线粗边  fill:#e6f6ec,stroke:#17a45f,stroke-width:2px,color:#0b5c3a   本节/本次新增
+modc  浅蓝色        fill:#f4f8ff,stroke:#8fb0e8                                     本次调整
 oldc  灰色虚线      fill:#f1f3f6,stroke:#9aa3af,stroke-width:1.2px,stroke-dasharray:5 3  基线复用/未动
 extc  蓝色          fill:#eaf1fe,stroke:#3574f0                                     外部系统/网关
 warnc 橙色          fill:#fff4e0,stroke:#e6a23c                                     分支/兜底/警告路径
 errc  红色          fill:#fdecec,stroke:#e5484d                                     错误路径
 ```
+
+图例从当前页签实际渲染的节点样式生成。示例中的 `modc` 用于调整项。只定义但未用于节点的 class 不会显示。时序图沿用参与者的新增和复用配色，默认按原始尺寸显示，可用「适配」缩放。
 
 ### 页签（tab）
 
