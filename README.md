@@ -1,4 +1,4 @@
-# Code Map · 代码地图生成技能
+# coding-map · 代码地图生成技能
 
 > **把代码，讲成一张可以点的图。**
 
@@ -10,7 +10,10 @@ Code Map 是一个代码地图生成引擎：输入工程上下文——一次�
 
 - **左栏 · 工程树** — IDEA 风格的类/接口/方法视图，状态徽标 + 搜索过滤，是整个系统的"目录页"
 - **中栏 · 三图联动** — 全景模块图 / 运行时序图 / 方法流程图，五色语义标记（核心绿 / 复用灰 / 外部蓝 / 兜底橙 / 错误红）
-- **右栏 · 说明卡** — 每个节点的"为什么这样设计、坑在哪里"，按类型过滤
+- **右栏 · 说明卡** — 先读结论和关键条件，需要时展开「核对源码」。有不同类别时可筛选
+- **窄屏浏览** — 地图默认占满宽度，用页头按钮展开工程树或说明卡
+- **时序图缩放** — 默认原始尺寸，横向平移可继续阅读，点击「适配」可看全图
+- **图例和统计** — 图例取自当前图实际使用的节点样式，省略 `meta.stats` 或传空数组即可隐藏统计
 - **三方联动** — 点任意一处，另外两栏定位高亮，SVG 连线贯穿直达
 - **主线导览** — 顶部"跟着流程走"站点条，6~10 站走完整个主题，只看导览也能理解全貌
 - **零依赖交付** — mermaid 本地打包，单文件 HTML 双击即开：离线可用、可入库存档、可直接发给任何人
@@ -71,7 +74,7 @@ node scripts/render-map.mjs --html <地图.html>
 node scripts/build-map.mjs --data assets/example-map.json --out /tmp/codemap-demo
 
 # 4. 安装为 WorkBuddy 技能（对话式生成）
-cp -r xfg-coding-map-skills ~/.workbuddy/skills/
+cp -r coding-map ~/.workbuddy/skills/
 ```
 
 安装后在 WorkBuddy 对话里直接说：
@@ -115,7 +118,7 @@ cp -r xfg-coding-map-skills ~/.workbuddy/skills/
 ## 目录结构
 
 ```
-xfg-coding-map-skills/
+coding-map/
 ├── SKILL.md                      # 技能入口：事实纪律 + 工作流（场景→素材→生成→两层校验→交付）
 ├── assets/
 │   ├── code-map-template.html    # 渲染引擎 + 示例数据（MAP-DATA 区间整体替换）
