@@ -242,7 +242,7 @@ async function main() {
       const restored=[...document.querySelectorAll('.doc')].every(d=>d.style.display!=='none');
       return {ok:hidden>0&&visible>0&&restored,hidden,visible,restored};})()`);
     assert(chipOk.ok, '说明卡筛选异常: ' + JSON.stringify(chipOk));
-    report.checks.push('doc-filter');
+    if (!chipOk.skipped) report.checks.push('doc-filter');
 
     /* 7. 树搜索（用第一个树行名称的片段做真实检索） */
     await openPanel('treePanel');

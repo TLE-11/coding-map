@@ -83,6 +83,7 @@ if (!meta || typeof meta !== 'object') warn('MAP_META 缺失——新模板依�
 else {
   const need = ['title', 'h1', 'subtitle', 'project', 'docCap', 'slug', 'welcomeSub'];
   need.forEach(k => { if (typeof meta[k] !== 'string' || !meta[k].trim()) err('MAP_META 缺少字段 ' + k); });
+  if (meta.docSummary !== undefined && typeof meta.docSummary !== 'string') err('MAP_META.docSummary 必须是字符串');
   if (meta.stats !== undefined) {
     if (!Array.isArray(meta.stats)) err('MAP_META.stats 必须是数组');
     else meta.stats.forEach((s, i) => {
@@ -100,7 +101,8 @@ else ok('DOCS：' + docs.length + ' 张说明卡');
 if (Array.isArray(docs)) {
   const badgeOK = ['新增', '调整', '测试', '复用'];
   docs.forEach(d => {
-    if (d && !badgeOK.includes(d.b)) err('说明卡「' + d.id + '」的 b「' + d.b + '」不在 ' + badgeOK.join('/') + ' 中（引擎徽标映射会失效）');
+    if (d && d.b !== undefined && !badgeOK.includes(d.b)) err('说明卡「' + d.id + '」的 b「' + d.b + '」不在 ' + badgeOK.join('/') + ' 中');
+    if (d && d.f !== undefined && typeof d.f !== 'string') err('说明卡「' + d.id + '」的 f 必须是字符串');
   });
 }
 if (!Array.isArray(tour)) err('TOUR 缺失或不是数组');

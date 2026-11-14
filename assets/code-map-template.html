@@ -271,8 +271,9 @@
     display: flex; flex-direction: column; }
   .doc-head { flex: none; padding: 10px 16px 9px; border-bottom: 1px solid var(--border);
     background: var(--panel); }
-  .doc-head .cap { font-size: 10px; font-weight: 700; color: var(--text-3);
-    letter-spacing: 1.2px; text-transform: uppercase; }
+  .doc-head .cap { font-size: 15px; font-weight: 700; color: var(--text); }
+  .doc-head .doc-summary { margin-top: 5px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
+  .doc-head .doc-summary:empty, .doc-chips:empty { display: none; }
   .doc-chips { display: flex; gap: 5px; margin-top: 8px; }
   .dchip { font-size: 10.5px; padding: 3px 10px; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--border); background: var(--panel); color: var(--text-2);
@@ -288,7 +289,7 @@
   .doc:hover { box-shadow: var(--shadow-md); border-color: var(--border-2); }
   .doc.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(53,116,240,.16), var(--shadow-md);
     scroll-margin-top: 8px; }
-  .doc h3 { font-size: 13px; font-weight: 650; margin-bottom: 4px; display: flex;
+  .doc h3 { font-size: 14px; font-weight: 650; margin-bottom: 5px; display: flex;
     align-items: center; gap: 8px; line-height: 1.35; }
   .doc .file { font-family: var(--mono); font-size: 10px; color: var(--accent-deep);
     background: var(--accent-soft); border-radius: 6px; padding: 3px 8px;
@@ -299,9 +300,13 @@
   .doc ul li b { color: var(--text); }
   .doc code { font-family: var(--mono); font-size: 11px; background: var(--gray-soft);
     border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; color: #953800; }
-  .doc h3 .pin { margin-left: auto; flex: none; font-size: 9.5px; font-weight: 500;
-    color: #b6bdc7; letter-spacing: .3px; opacity: 0; transition: opacity .15s; white-space: nowrap; }
-  .doc:hover h3 .pin { opacity: 1; }
+  .doc .card-lead { font-size: 13px; font-weight: 600; line-height: 1.6; }
+  .doc .card-lead + ul { margin-top: 6px; font-size: 12.5px; line-height: 1.6; }
+  .doc .card-evidence { margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--accent-deep); }
+  .doc .card-evidence summary { cursor: pointer; width: fit-content; }
+  .doc .card-evidence div { display: flex; flex-wrap: wrap; gap: 5px 14px; padding-top: 7px; }
+  .doc .card-evidence a { color: inherit; overflow-wrap: anywhere; }
 
   /* ══════════ 导览卡片 ══════════ */
   .tour {
@@ -475,13 +480,8 @@
   <aside id="docPanel">
     <div class="doc-head">
       <div class="cap">变更说明 · vs xfg-1-3</div>
-      <div class="doc-chips" id="docChips">
-        <span class="dchip on" data-f="all">全部</span>
-        <span class="dchip" data-f="新增">新增</span>
-        <span class="dchip" data-f="调整">调整</span>
-        <span class="dchip" data-f="测试">测试</span>
-        <span class="dchip" data-f="复用">复用</span>
-      </div>
+      <p class="doc-summary"></p>
+      <div class="doc-chips" id="docChips"></div>
     </div>
     <div id="docs"></div>
   </aside>
@@ -958,6 +958,7 @@ const TOUR = [
   if (proj && M.project) proj.textContent = M.project;
   const cap = document.querySelector('.doc-head .cap');
   if (cap && M.docCap) cap.textContent = M.docCap;
+  document.querySelector('.doc-summary').textContent = M.docSummary || '';
   const wHero = document.querySelector('.welcome h2');
   if (wHero && M.h1) wHero.textContent = M.h1;
   const wSub = document.querySelector('.welcome .w-sub');
@@ -1165,14 +1166,19 @@ function renderDocs() {
   const root = document.getElementById('docs');
   const meta = { '新增': ['new', 'var(--green)'], '调整': ['mod', 'var(--amber)'],
     '测试': ['new', 'var(--purple)'], '复用': ['old', '#9aa3af'] };
+  const categories = new Set(DOCS.map(d => d.b || ''));
+  const showCategories = categories.size > 1;
   DOCS.forEach(d => {
-    const [cls, color] = meta[d.b];
     const el = document.createElement('div');
-    el.className = 'doc'; el.id = 'doc-' + d.id; el.dataset.b = d.b;
-    el.style.setProperty('--dc', color);
-    el.innerHTML = `<h3><span class="badge ${cls}">${d.b}</span>${d.t}<span class="pin">🔗 点击联动</span></h3><div class="file">${d.f}</div>${d.body}`;
+    el.className = 'doc'; el.id = 'doc-' + d.id; el.dataset.b = d.b || '';
+    const [cls, color] = meta[d.b] || [];
+    if (color) el.style.setProperty('--dc', color);
+    const badge = showCategories && cls ? `<span class="badge ${cls}">${d.b}</span>` : '';
+    const file = d.f ? `<div class="file">${d.f}</div>` : '';
+    el.innerHTML = `<h3>${badge}${d.t}</h3>${file}${d.body}`;
     /* 点击说明卡 → 反向联动：高亮树行 + 图节点，连线从左贯穿到右 */
-    el.addEventListener('click', () => {
+    el.addEventListener('click', event => {
+      if (event.target.closest('details, a')) return;
       const row = [...document.querySelectorAll('.tnode')]
         .find(r => { const info = JSON.parse(r.dataset.item || '{}'); return info.doc === d.id; });
       if (row) {
@@ -1183,15 +1189,26 @@ function renderDocs() {
     });
     root.appendChild(el);
   });
+  if (showCategories) {
+    const filters = document.getElementById('docChips');
+    const options = ['all', ...Object.keys(meta).filter(kind => categories.has(kind))];
+    options.forEach(kind => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = kind === 'all' ? 'dchip on' : 'dchip';
+      button.dataset.f = kind;
+      button.textContent = kind === 'all' ? '全部' : kind;
+      button.addEventListener('click', () => {
+        filters.querySelector('.on').classList.remove('on');
+        button.classList.add('on');
+        root.querySelectorAll('.doc').forEach(card => {
+          card.style.display = (kind === 'all' || card.dataset.b === kind) ? '' : 'none';
+        });
+      });
+      filters.appendChild(button);
+    });
+  }
 }
-/* 说明卡类型过滤 */
-document.querySelectorAll('.dchip').forEach(ch => ch.addEventListener('click', () => {
-  document.querySelectorAll('.dchip').forEach(c => c.classList.toggle('on', c === ch));
-  const f = ch.dataset.f;
-  document.querySelectorAll('.doc').forEach(d => {
-    d.style.display = (f === 'all' || d.dataset.b === f) ? '' : 'none';
-  });
-}));
 
 /* ══════════════ 联动核心 ══════════════ */
 let activeTree = null, pinned = false;

@@ -50,6 +50,7 @@ function validateContract(D) {
     if (typeof M[k] !== 'string' || !M[k].trim()) fail(`meta.${k} 必须是非空字符串`);
   });
   if (!/^[a-z0-9][a-z0-9_-]*$/i.test(M.slug)) fail('meta.slug 只能含字母数字、连字符、下划线');
+  if (M.docSummary !== undefined && typeof M.docSummary !== 'string') fail('meta.docSummary 必须是字符串');
   if (M.stats !== undefined && !Array.isArray(M.stats)) fail('meta.stats 必须是数组');
   (M.stats ?? []).forEach((s, i) => {
     if (!s || typeof s.num !== 'string' || typeof s.lbl !== 'string') fail(`meta.stats[${i}] 需要 num/lbl 字符串字段`);
@@ -77,8 +78,9 @@ function validateContract(D) {
     if (!d || typeof d.id !== 'string' || !d.id.trim()) fail(`docs[${i}] 缺 id`);
     if (docIds.has(d.id)) fail(`docs[${i}] id 重复：${d.id}`);
     docIds.add(d.id);
-    if (!DOC_BADGES.includes(d.b)) fail(`docs[${d.id}] 的 b「${d.b}」不在 ${DOC_BADGES.join('/')} 中`);
-    ['t', 'f', 'body'].forEach(k => { if (typeof d[k] !== 'string' || !d[k].trim()) fail(`docs[${d.id}] 缺 ${k}`); });
+    if (d.b !== undefined && !DOC_BADGES.includes(d.b)) fail(`docs[${d.id}] 的 b「${d.b}」不在 ${DOC_BADGES.join('/')} 中`);
+    if (d.f !== undefined && typeof d.f !== 'string') fail(`docs[${d.id}] 的 f 必须是字符串`);
+    ['t', 'body'].forEach(k => { if (typeof d[k] !== 'string' || !d[k].trim()) fail(`docs[${d.id}] 缺 ${k}`); });
   });
   (function walkTree(list, where) {
     list.forEach((n, i) => {

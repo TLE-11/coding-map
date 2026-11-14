@@ -35,6 +35,7 @@ JSON 顶层字段：
   stats:[{num:'20',lbl:'新增文件'},{num:'4',lbl:'调整文件',amber:true},{num:'+3278',lbl:'/ -1 行'}],
   project:'树顶包名/项目坐标',
   docCap:'右栏标题，如 变更说明 · vs xfg-1-3',
+  docSummary:'右栏开头的一两句主线概述', // 可选，纯文本
   slug:'xfg-2-1',                     // 唯一！欢迎层 localStorage key 派生为 <slug>-welcomed
   welcomeSub:'欢迎浮层副标题 HTML',
   welcomeItems:[{icon:'🧭',html:'…<b>…</b>…'}, …]   // 2-3 条场景化引导
@@ -98,14 +99,19 @@ errc  红色          fill:#fdecec,stroke:#e5484d                               
 ### DOCS（右侧说明卡，数组）
 
 ```js
-{ id:'唯一id',            // 树节点 doc 字段引用它；重复 id 是错误
-  b:'新增'|'调整'|'测试'|'复用',   // 决定徽标颜色（绿/橙/紫/灰）和右栏过滤 chip
-  t:'标题 — 一句话定位',    // 如 'ILlmRuntimePort — 运行时端口（领域插座）'
-  f:'文件路径 · 行数统计',   // mono 风格显示，如 'domain/…/llm/adapter/port/ILlmRuntimePort.java · +98 行'
-  body:`<ul><li><b>要点</b>：…<code>代码</code>…</li>…</ul>` }   // HTML 片段，4-6 条 li 最佳
+{ id:'reservation-expiry', // 树节点使用的说明卡 ID
+  t:'预约到期后会怎样',
+  body:`<p class="card-lead">到期未取的预约会释放给下一位读者。</p>
+  <ul><li><b>触发条件</b> 当前时间到达取书截止时间，且预约仍待取。</li>
+      <li><b>重复扫描</b> 仅更新仍待取的记录，避免重复释放。</li></ul>
+  <details class="card-evidence"><summary>核对源码</summary>
+    <div><a href="sources.html#expiry-L42">到期处理分支 ↗</a></div>
+  </details>` }
 ```
 
-卡片内容三问：**它是什么（定位）→ 关键设计/规则（2-4 条，加粗关键词）→ 容易忽略的细节/坑**。避免把代码大段贴进卡片。
+正文先给可独立阅读的结论，再挑两三条影响结果的规则。金额或状态容易误读时，给一个带前提的例子。源码链接写能核对什么，确认目标文件和行号后再放进折叠区。只有本地读者可见的源码快照应随本地产物保存。
+
+`b` 可选，支持 `新增`、`调整`、`测试`、`复用`。有不同类别时才显示筛选和可用徽标。`f` 是可选的文件路径或行数说明，已有源码入口时可省略。旧数据中的 `b`、`f` 和 HTML 正文仍可直接生成。
 
 ### TOUR（导览站点，数组）
 

@@ -72,6 +72,7 @@ node <本技能目录>/scripts/build-map.mjs --data <map-data.json> --out <输�
 
 两条路径共同约束：
 
+- 右栏先用 `meta.docSummary` 概括主线。每张卡用读者会问的问题作标题，先写一句结论，再写两三条决定结果的条件、例子或恢复动作。源码入口放在「核对源码」中，字段与示例见 [数据规范](references/data-spec.md#docs右侧说明卡数组)。
 - **MAP_META.slug 必须唯一**（localStorage 欢迎层 key 由它派生，重复则老访客看不到新图欢迎层）。
 - 场景需要更少页签时（路径 B）：删除对应 `.tab`、`#wrap-x`、`#box-x`、`#src-x` 元素和数据区对应 `X_SRC` 常量；路径 A 用 JSON 的 `tabs` 字段声明保留页签即可。
 - 引擎区一行不改。
